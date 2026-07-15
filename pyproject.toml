@@ -1,7 +1,19 @@
 [project]
 name = "rag-workspace"
 version = "0.1.0"
-description = "Add your description here"
+description = "AI Document Assistant CLI with RAG-Anything, Voice, and Magika"
 readme = "README.md"
-requires-python = ">=3.11"
-dependencies = []
+requires-python = ">=3.10"
+dependencies = [
+    "raganything[all]>=0.1.0",
+    "magika>=0.5.0",
+    "SpeechRecognition>=3.10.0",
+    "pyttsx3>=2.90",
+    "pyaudio>=0.2.14",
+    "magic-pdf[full]>=0.6.0",
+    "pydub>=0.25.1",
+]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"

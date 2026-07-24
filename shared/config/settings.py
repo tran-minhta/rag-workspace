@@ -21,7 +21,7 @@ class Settings(BaseSettings):
 
     # --- Paths ---
     base_dir: Path = Path(__file__).resolve().parent.parent.parent
-    data_dir: Path = Field(default=None)
+    data_dir: Path = Field(default_factory=lambda: Path(__file__).resolve().parent.parent.parent / "data")
 
     # --- LLM Providers ---
     ollama_base_url: str = "http://ollama:11434"
@@ -94,8 +94,6 @@ class Settings(BaseSettings):
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
-        if self.data_dir is None:
-            self.data_dir = self.base_dir / "data"
         self.data_dir.mkdir(parents=True, exist_ok=True)
 
 

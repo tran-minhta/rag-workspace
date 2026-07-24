@@ -175,44 +175,11 @@ async def handle_command(command: str):
 
 
 # =============================================================================
-# File Upload
+# File Upload - Handle via chat message
 # =============================================================================
 
-@cl.on_file_upload
-async def on_file_upload(files: list[cl.File]):
-    """Handle file uploads."""
-    for file in files:
-        await cl.Message(
-            content=f"📤 Đang upload: **{file.name}** ({file.size} bytes)..."
-        ).send()
-
-        try:
-            async with httpx.AsyncClient(timeout=120) as client:
-                # Upload file
-                with open(file.path, "rb") as f:
-                    files_data = {"file": (file.name, f, "application/octet-stream")}
-                    response = await client.post(
-                        f"{GATEWAY_URL}/documents/upload",
-                        files=files_data,
-                    )
-
-                if response.status_code == 200:
-                    data = response.json()
-                    await cl.Message(
-                        content=f"✅ Upload thành công!\n\n"
-                               f"- **Document ID:** {data.get('document_id', 'N/A')}\n"
-                               f"- **Pages:** {data.get('pages', 'N/A')}\n"
-                               f"- **Chunks:** {data.get('chunks', 'N/A')}"
-                    ).send()
-                else:
-                    await cl.Message(
-                        content=f"❌ Upload thất bại: {response.text}"
-                    ).send()
-
-        except Exception as e:
-            await cl.Message(
-                content=f"❌ Lỗi upload: {str(e)}"
-            ).send()
+# Note: File upload is handled through chat messages in Chainlit
+# Users can upload files by typing /upload command
 
 
 # =============================================================================

@@ -53,17 +53,16 @@ services:
     ports:
       - "8001:8001"
     environment:
-      - OLLAMA_BASE_URL=http://ollama:11434
+      - OLLAMA_BASE_URL=http://host.docker.internal:11434
       - GEMINI_API_KEY=${GEMINI_API_KEY:-}
       - RAG_SERVICE_URL=http://rag:8002
       - DOCUMENT_SERVICE_URL=http://document:8003
       - RESEARCH_SERVICE_URL=http://research:8007
-      - EDITOR_SERVICE_URL=http://editor:8008
+      - EDITOR_SERVICE_URL=http://editor:8009
     volumes:
       - ./shared:/app/shared
       - ./data:/app/data
     depends_on:
-      - ollama
       - rag
     networks:
       - rag-network
@@ -219,26 +218,28 @@ services:
 
   # ---------------------------------------------------------------------------
   # OLLAMA - Local LLM Server
+  # Using host Ollama (already running on port 11434)
+  # Uncomment below if you want Docker Ollama instead
   # ---------------------------------------------------------------------------
-  ollama:
-    image: ollama/ollama:latest
-    ports:
-      - "11434:11434"
-    volumes:
-      - ollama_data:/root/.ollama
-    environment:
-      - OLLAMA_HOST=0.0.0.0
-    networks:
-      - rag-network
-    restart: unless-stopped
-    # GPU passthrough (uncomment if you have NVIDIA GPU)
-    # deploy:
-    #   resources:
-    #     reservations:
-    #       devices:
-    #         - driver: nvidia
-    #           count: 1
-    #           capabilities: [gpu]
+  # ollama:
+  #   image: ollama/ollama:latest
+  #   ports:
+  #     - "11434:11434"
+  #   volumes:
+  #     - ollama_data:/root/.ollama
+  #   environment:
+  #     - OLLAMA_HOST=0.0.0.0
+  #   networks:
+  #     - rag-network
+  #   restart: unless-stopped
+  #   # GPU passthrough (uncomment if you have NVIDIA GPU)
+  #   # deploy:
+  #   #   resources:
+  #   #     reservations:
+  #   #       devices:
+  #   #         - driver: nvidia
+  #   #           count: 1
+  #   #           capabilities: [gpu]
 
   # ---------------------------------------------------------------------------
   # CHROMADB - Vector Store

@@ -24,10 +24,10 @@ class Settings(BaseSettings):
     data_dir: Path = Field(default_factory=lambda: Path(__file__).resolve().parent.parent.parent / "data")
 
     # --- LLM Providers ---
-    ollama_base_url: str = "http://ollama:11434"
-    ollama_model: str = "llama3.1:8b"
-    ollama_model_large: str = "qwen2.5:14b"
-    gemini_api_key: str = ""
+    ollama_base_url: str = Field(default="http://ollama:11434", alias="OLLAMA_BASE_URL")
+    ollama_model: str = Field(default="llama3.1:8b", alias="OLLAMA_MODEL")
+    ollama_model_large: str = Field(default="qwen2.5:14b", alias="OLLAMA_MODEL_LARGE")
+    gemini_api_key: str = Field(default="", alias="GEMINI_API_KEY")
     gemini_model: str = "gemini-2.0-flash"
 
     # --- Embeddings ---

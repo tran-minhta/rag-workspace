@@ -196,8 +196,7 @@ async def run_agent(request: InvokeRequest) -> InvokeResponse:
 
     # Build messages
     messages = [
-        {"role": "system", "content": system_prompt},
-        {"role": "system", "content": f"Context:\n{context}"},
+        {"role": "system", "content": f"{system_prompt}\n\nContext:\n{context}"},
     ]
 
     # Add conversation history

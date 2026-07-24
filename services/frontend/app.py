@@ -7,7 +7,6 @@ import chainlit as cl
 import httpx
 import os
 
-# Gateway URL
 GATEWAY_URL = os.getenv("GATEWAY_URL", "http://gateway:8000")
 
 
@@ -19,9 +18,9 @@ GATEWAY_URL = os.getenv("GATEWAY_URL", "http://gateway:8000")
 async def set_starters():
     return [
         cl.Starter(label="Chat", message="Xin chào, tôi cần giúp đỡ"),
-        cl.Starter(label="Upload tài liệu", message="/upload"),
-        cl.Starter(label="Deep Research", message="/research"),
-        cl.Starter(label="Kiểm tra hệ thống", message="/status"),
+        cl.Starter(label="Upload tài liệu", message="upload tài liệu"),
+        cl.Starter(label="Deep Research", message="research Machine Learning"),
+        cl.Starter(label="Kiểm tra hệ thống", message="kiểm tra hệ thống"),
     ]
 
 
@@ -33,114 +32,83 @@ async def set_starters():
 async def on_chat_start():
     cl.user_session.set("conversation_id", cl.context.session.id)
     cl.user_session.set("history", [])
-    cl.user_session.set("model", "llama3.1:8b")
+    cl.user_session.set("model", "qwen3.5:4b")
     cl.user_session.set("provider", "ollama")
     cl.user_session.set("use_web_search", True)
 
     await cl.Message(
         content=(
-            "Chao mung den **RAG-Agent!**\n\n"
-            "Go `/help` de xem danh sach lenh.\n"
-            "Go `/settings` de cai dat model.\n\n"
+            "**Chao mung den RAG-Agent!**\n\n"
+            "Go **/help** de xem danh sach lenh.\n"
+            "Go **/settings** de cai dat model.\n\n"
             "**Cau hinh hien tai:**\n"
             "- Provider: Ollama\n"
-            "- Model: llama3.1:8b\n"
+            "- Model: qwen3.5:4b\n"
             "- Web Search: Bat"
         )
     ).send()
 
 
 # =============================================================================
-# Commands
+# Message Handler
 # =============================================================================
 
 @cl.on_message
 async def on_message(message: cl.Message):
     content = message.content.strip()
+    cmd = content.lower()
 
-    if content.startswith("/"):
-        await handle_command(content)
+    # --- help ---
+    if cmd in ("/help", "help", "trợ giúp"):
+        await cl.Message(content=_help_text()).send()
         return
 
-    await chat_with_agent(content)
+    # --- settings / setting ---
+    if cmd in ("/settings", "/setting", "settings", "setting", "cài đặt"):
+        await cl.Message(content=_settings_text()).send()
+        return
 
-
-async def handle_command(command: str):
-    cmd = command.lower().strip()
-
-    if cmd == "/help":
-        await cl.Message(
-            content=(
-                "**Danh sach lenh:**\n\n"
-                "- `/help` - Tro giup\n"
-                "- `/settings` - Cai dat\n"
-                "- `/model ollama` - Dung Ollama\n"
-                "- `/model gemini` - Dung Gemini\n"
-                "- `/search on` - Bat web search\n"
-                "- `/search off` - Tat web search\n"
-                "- `/clear` - Xoa lich su\n"
-                "- `/status` - Trang thai he thong\n"
-                "- `/upload` - Upload tai lieu\n"
-                "- `/research` - Deep Research"
-            )
-        ).send()
-
-    elif cmd == "/settings":
-        provider = cl.user_session.get("provider", "ollama")
-        model = cl.user_session.get("model", "llama3.1:8b")
-        ws = cl.user_session.get("use_web_search", True)
-        await cl.Message(
-            content=(
-                "**Cai dat hien tai:**\n\n"
-                f"- Provider: `{provider}`\n"
-                f"- Model: `{model}`\n"
-                f"- Web Search: `{'Bat' if ws else 'Tat'}`\n\n"
-                "**Thay doi:**\n"
-                "- `/model ollama` hoac `/model gemini`\n"
-                "- `/search on` hoac `/search off`"
-            )
-        ).send()
-
-    elif cmd.startswith("/model"):
-        parts = cmd.split()
-        if len(parts) < 2:
-            await cl.Message(content="Dung: `/model ollama` hoac `/model gemini`").send()
-            return
-
-        provider = parts[1]
-        if provider == "ollama":
+    # --- model ---
+    if cmd.startswith("/model ") or cmd.startswith("model "):
+        arg = content.split(None, 1)[1].strip().lower() if len(content.split(None, 1)) > 1 else ""
+        if arg == "ollama":
             cl.user_session.set("provider", "ollama")
-            cl.user_session.set("model", "llama3.1:8b")
-            await cl.Message(content="Da chuyen sang **Ollama** (llama3.1:8b)").send()
-        elif provider == "gemini":
+            cl.user_session.set("model", "qwen3.5:4b")
+            await cl.Message(content="Da chuyen sang **Ollama** (qwen3.5:4b)").send()
+        elif arg == "gemini":
             cl.user_session.set("provider", "gemini")
             cl.user_session.set("model", "gemini-2.0-flash")
             await cl.Message(content="Da chuyen sang **Gemini** (gemini-2.0-flash)").send()
         else:
-            await cl.Message(content=f"Provider khong ho tro: `{provider}`").send()
+            await cl.Message(content="Dung: **/model ollama** hoac **/model gemini**").send()
+        return
 
-    elif cmd.startswith("/search"):
-        parts = cmd.split()
-        if len(parts) < 2:
-            await cl.Message(content="Dung: `/search on` hoac `/search off`").send()
-            return
-
-        state = parts[1]
-        if state == "on":
+    # --- search ---
+    if cmd.startswith("/search ") or cmd.startswith("search "):
+        arg = content.split(None, 1)[1].strip().lower() if len(content.split(None, 1)) > 1 else ""
+        if arg == "on":
             cl.user_session.set("use_web_search", True)
             await cl.Message(content="Da **bat** web search").send()
-        elif state == "off":
+        elif arg == "off":
             cl.user_session.set("use_web_search", False)
             await cl.Message(content="Da **tat** web search").send()
+        else:
+            await cl.Message(content="Dung: **/search on** hoac **/search off**").send()
+        return
 
-    elif cmd == "/clear":
+    # --- clear ---
+    if cmd in ("/clear", "clear", "xóa"):
         cl.user_session.set("history", [])
         await cl.Message(content="Da xoa lich su chat.").send()
+        return
 
-    elif cmd == "/status":
-        await check_system_status()
+    # --- status ---
+    if cmd in ("/status", "status", "kiểm tra hệ thống", "kiểm tra trạng thái"):
+        await _check_status()
+        return
 
-    elif cmd == "/upload":
+    # --- upload ---
+    if cmd in ("/upload", "upload", "upload tài liệu", "tải tài liệu"):
         await cl.Message(
             content=(
                 "**Upload tai lieu:**\n\n"
@@ -148,25 +116,58 @@ async def handle_command(command: str):
                 "Ho tro: PDF, DOCX, TXT, Markdown, HTML"
             )
         ).send()
+        return
 
-    elif cmd.startswith("/research"):
-        parts = command.split(maxsplit=1)
-        if len(parts) > 1 and parts[1].strip():
-            await do_research(parts[1].strip())
+    # --- research ---
+    if cmd.startswith("/research") or cmd.startswith("research"):
+        parts = content.split(maxsplit=1)
+        topic = parts[1].strip() if len(parts) > 1 else ""
+        if topic:
+            await _do_research(topic)
         else:
             await cl.Message(
                 content=(
                     "**Deep Research:**\n\n"
                     "Nhap chu de nghien cuu, vi du:\n"
-                    "`/research Machine Learning in Healthcare`\n\n"
+                    "**/research Machine Learning in Healthcare**\n\n"
                     "Hoac chat truc tiep de agent tu research."
                 )
             ).send()
+        return
 
-    else:
-        await cl.Message(
-            content=f"Khong ro lenh: `{command}`\nGo `/help` de xem danh sach."
-        ).send()
+    # --- mac dinh: chat voi agent ---
+    await chat_with_agent(content)
+
+
+def _help_text():
+    return (
+        "**Danh sach lenh:**\n\n"
+        "- **/help** - Tro giup\n"
+        "- **/settings** - Cai dat\n"
+        "- **/model ollama** - Dung Ollama\n"
+        "- **/model gemini** - Dung Gemini\n"
+        "- **/search on** - Bat web search\n"
+        "- **/search off** - Tat web search\n"
+        "- **/clear** - Xoa lich su\n"
+        "- **/status** - Trang thai he thong\n"
+        "- **/upload** - Upload tai lieu\n"
+        "- **/research <chu de>** - Deep Research"
+    )
+
+
+def _settings_text():
+    provider = cl.user_session.get("provider", "ollama")
+    model = cl.user_session.get("model", "qwen3.5:4b")
+    ws = cl.user_session.get("use_web_search", True)
+    return (
+        "**Cai dat hien tai:**\n\n"
+        f"- Provider: `{provider}`\n"
+        f"- Model: `{model}`\n"
+        f"- Web Search: `{'Bat' if ws else 'Tat'}`\n\n"
+        "**Thay doi:**\n"
+        "- **/model ollama** hoac **/model gemini**\n"
+        "- **/search on** hoac **/search off**"
+    )
 
 
 # =============================================================================
@@ -182,7 +183,7 @@ async def chat_with_agent(content: str):
     await thinking.send()
 
     try:
-        async with httpx.AsyncClient(timeout=120) as client:
+        async with httpx.AsyncClient(timeout=180) as client:
             response = await client.post(
                 f"{GATEWAY_URL}/chat/",
                 json={
@@ -227,10 +228,10 @@ async def chat_with_agent(content: str):
 
 
 # =============================================================================
-# System Status
+# Status
 # =============================================================================
 
-async def check_system_status():
+async def _check_status():
     try:
         async with httpx.AsyncClient(timeout=10) as client:
             response = await client.get(f"{GATEWAY_URL}/health/")
@@ -251,10 +252,8 @@ async def check_system_status():
 # Research
 # =============================================================================
 
-async def do_research(topic: str):
-    await cl.Message(
-        content=f"Dang nghien cuu: **{topic}**\nVui long cho..."
-    ).send()
+async def _do_research(topic: str):
+    await cl.Message(content=f"Dang nghien cuu: **{topic}**\nVui long cho...").send()
 
     try:
         async with httpx.AsyncClient(timeout=600) as client:
@@ -283,10 +282,6 @@ async def do_research(topic: str):
     except Exception as e:
         await cl.Message(content=f"Loi nghien cuu: {str(e)}").send()
 
-
-# =============================================================================
-# Main
-# =============================================================================
 
 if __name__ == "__main__":
     cl.run_app()

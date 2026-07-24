@@ -53,7 +53,9 @@ services:
     ports:
       - "8001:8001"
     environment:
-      - OLLAMA_BASE_URL=http://host.docker.internal:11434
+      - OLLAMA_BASE_URL=${OLLAMA_BASE_URL:-http://ollama:11434}
+      - OLLAMA_MODEL=${OLLAMA_MODEL:-hf.co/KevinJK51/Qwen3.6-12B-IQ-Ultra-Heretic-Uncensored-Thinking-V2-Hightop-GGUF:IQ4_XS}
+      - OLLAMA_MODEL_LARGE=${OLLAMA_MODEL_LARGE:-hf.co/mradermacher/gemma-4-12B-agentic-fable5-composer2.5-v2-3.5x-tau2-uncensored-heretic-i1-GGUF:Q3_K_L}
       - GEMINI_API_KEY=${GEMINI_API_KEY:-}
       - RAG_SERVICE_URL=http://rag:8002
       - DOCUMENT_SERVICE_URL=http://document:8003
@@ -64,6 +66,7 @@ services:
       - ./data:/app/data
     depends_on:
       - rag
+      - ollama
     networks:
       - rag-network
     restart: unless-stopped
@@ -218,28 +221,19 @@ services:
 
   # ---------------------------------------------------------------------------
   # OLLAMA - Local LLM Server
-  # Using host Ollama (already running on port 11434)
-  # Uncomment below if you want Docker Ollama instead
+  # Using host Ollama models via volume mount
   # ---------------------------------------------------------------------------
-  # ollama:
-  #   image: ollama/ollama:latest
-  #   ports:
-  #     - "11434:11434"
-  #   volumes:
-  #     - ollama_data:/root/.ollama
-  #   environment:
-  #     - OLLAMA_HOST=0.0.0.0
-  #   networks:
-  #     - rag-network
-  #   restart: unless-stopped
-  #   # GPU passthrough (uncomment if you have NVIDIA GPU)
-  #   # deploy:
-  #   #   resources:
-  #   #     reservations:
-  #   #       devices:
-  #   #         - driver: nvidia
-  #   #           count: 1
-  #   #           capabilities: [gpu]
+  ollama:
+    image: ollama/ollama:latest
+    ports:
+      - "11435:11434"
+    volumes:
+      - /usr/share/ollama/.ollama:/root/.ollama
+    environment:
+      - OLLAMA_HOST=0.0.0.0
+    networks:
+      - rag-network
+    restart: unless-stopped
 
   # ---------------------------------------------------------------------------
   # CHROMADB - Vector Store
@@ -262,7 +256,7 @@ services:
   crawl4ai:
     image: unclecode/crawl4ai:latest
     ports:
-      - "3000:3000"
+      - "3001:3000"
     environment:
       - CRAWL4AI_API_TOKEN=${CRAWL4AI_TOKEN:-}
     volumes:

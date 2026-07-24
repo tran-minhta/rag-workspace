@@ -10,6 +10,7 @@
   <a href="#-quick-start">Quick Start</a> •
   <a href="#-cấu-hình">Cấu hình</a> •
   <a href="#-api-reference">API</a> •
+  <a href="#-triển-khai">Triển khai</a> •
   <a href="#-license">License</a>
 </p>
 
@@ -476,6 +477,43 @@ ruff format .
 3. Commit changes (`git commit -m 'Add amazing feature'`)
 4. Push to branch (`git push origin feature/amazing`)
 5. Open Pull Request
+
+---
+
+## 🚀 Triển khai
+
+Xem hướng dẫn chi tiết tại [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md)
+
+### Tóm tắt 5 phương án:
+
+| Phương án | Thời gian build | Thời gian lại | Phù hợp |
+|-----------|----------------|---------------|---------|
+| 1. Docker Compose | ~16 phút | ~16 phút | Beginners |
+| 2. Base Image | ~10 phút | ~30 giây | Production |
+| 3. BuildKit | ~15 phút | ~5 phút | Development |
+| 4. Pre-built | ~2-5 phút | Không cần | Production |
+| 5. Local | Không cần | Không cần | Development |
+
+### Nhanh nhất (Phương án 5 - Local):
+
+```bash
+git clone https://github.com/tran-minhta/RAG-Agent.git
+cd RAG-Agent
+python -m venv .venv
+source .venv/bin/activate
+pip install -e .
+cp .env.example .env
+python -m services.gateway.main  # Chạy từng service
+```
+
+### Production (Phương án 2 - Base Image):
+
+```bash
+git clone https://github.com/tran-minhta/RAG-Agent.git
+cd RAG-Agent
+docker build -t rag-agent-base:latest -f base.Dockerfile .
+docker-compose -f docker-compose.optimized.yml up -d
+```
 
 ---
 
